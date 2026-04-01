@@ -37,8 +37,7 @@
         <!-- Header -->
         <header class="flex justify-between items-end mb-8">
             <div>
-                <h1
-                    class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-sky-500">
+                <h1 class="text-4xl font-bold text-slate-700">
                     Cognitive Target Generator
                 </h1>
                 <p class="text-slate-600 mt-1">based on Rescue Maze Rules 2026</p>
@@ -111,6 +110,12 @@
         </div>
     </div>
 
+    <footer class="max-w-6xl mx-auto mt-8 pt-4 border-t border-slate-200 text-center text-sm text-slate-500">
+        Created by
+        <a href="https://tuton-rcj.github.io/" target="_blank" rel="noopener noreferrer"
+            class="text-blue-700 hover:text-blue-800 underline underline-offset-2">Tuton</a>
+    </footer>
+
     <script>
         const { jsPDF } = window.jspdf;
 
@@ -167,7 +172,6 @@
             document.getElementById('scale-slider').addEventListener('input', (e) => {
                 currentScale = parseFloat(e.target.value);
                 document.getElementById('scale-display').innerText = currentScale.toFixed(2);
-                updatePreview();
             });
 
             updatePreview();
@@ -181,7 +185,6 @@
 
         function updateCount(id, val) {
             currentCounts[id] = parseInt(val) || 0;
-            updatePreview();
         }
 
         function refreshPatterns() { updatePreview(); }
@@ -221,11 +224,10 @@
 
                     let svgRings = '';
                     const baseSize = 120; // px
-                    const scaledSize = baseSize * currentScale;
 
                     pattern.reverse().forEach((c, i) => {
-                        const r = ((5 - i) / 5) * (scaledSize / 2);
-                        svgRings += `<circle cx="${baseSize / 2}" cy="${baseSize / 2}" r="${r}" fill="${currentColors[c.id]}" stroke="#000" stroke-width="0.5" />`;
+                        const r = ((5 - i) / 5) * (baseSize / 2);
+                        svgRings += `<circle cx="${baseSize / 2}" cy="${baseSize / 2}" r="${r}" fill="${currentColors[c.id]}" />`;
                     });
 
                     card.innerHTML = `
@@ -272,9 +274,7 @@
                 pattern.reverse().forEach((c, ringIdx) => {
                     const diameter = (5 - ringIdx) * 10 * currentScale; // 50, 40, 30, 20, 10 mm
                     doc.setFillColor(currentColors[c.id]);
-                    doc.setDrawColor(0);
-                    doc.setLineWidth(0.1);
-                    doc.circle(x, y, diameter / 2, 'FD');
+                    doc.circle(x, y, diameter / 2, 'F');
                 });
 
                 // Label
