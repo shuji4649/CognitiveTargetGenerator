@@ -62,6 +62,18 @@
                         <div class="space-y-4" id="color-settings">
                             <!-- Dynamic Color Inputs -->
                         </div>
+                        <div class="flex gap-2 mt-6">
+                            <button onclick="savePalette()"
+                                class="flex-1 text-sm bg-white border border-blue-300 text-blue-700 hover:bg-blue-50 font-semibold py-2 rounded-lg transition-colors">
+                                Save
+                            </button>
+                            <button onclick="document.getElementById('palette-file-input').click()"
+                                class="flex-1 text-sm bg-white border border-blue-300 text-blue-700 hover:bg-blue-50 font-semibold py-2 rounded-lg transition-colors">
+                                Load
+                            </button>
+                            <input type="file" id="palette-file-input" accept=".json" style="display: none;"
+                                onchange="loadPalette(event)">
+                        </div>
                     </div>
                     <div class="lg:col-span-2">
                         <div class="flex justify-between items-center mb-4">
@@ -162,10 +174,10 @@
         // Configuration
         const colorDefs = [
             { id: 'black', label: 'Black', val: -2, default: '#000000' },
-            { id: 'red', label: 'Red', val: -1, default: '#ef4444' },
-            { id: 'yellow', label: 'Yellow', val: 0, default: '#facc15' },
-            { id: 'green', label: 'Green', val: 1, default: '#22c55e' },
-            { id: 'blue', label: 'Blue', val: 2, default: '#3b82f6' }
+            { id: 'red', label: 'Red', val: -1, default: '#ee0000' },
+            { id: 'yellow', label: 'Yellow', val: 0, default: '#ffff00' },
+            { id: 'green', label: 'Green', val: 1, default: '#00b050' },
+            { id: 'blue', label: 'Blue', val: 2, default: '#00b0f0' }
         ];
 
         const targetTypes = [
@@ -486,6 +498,51 @@
 
         document.getElementById('generate-pdf').onclick = generatePDF;
         document.getElementById('generate-manual-pdf').onclick = generateManualPDF;
+
+        function savePalette() {
+            const paletteData = {
+                timestamp: new Date().toISOString(),
+                colors: currentColors
+            };
+            const jsonString = JSON.stringify(paletteData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `palette_${new Date().getTime()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadPalette(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const paletteData = JSON.parse(e.target.result);
+                    if (paletteData.colors && typeof paletteData.colors === 'object') {
+                        currentColors = { ...paletteData.colors };
+                        colorDefs.forEach(c => {
+                            if (currentColors[c.id]) {
+                                document.getElementById(`swatch-${c.id}`).style.background = currentColors[c.id];
+                            }
+                        });
+                        updatePreview();
+                        updateAllManualPreviews();
+                        // alert('Palette loaded successfully!');
+                    } else {
+                        alert('Invalid palette file format.');
+                    }
+                } catch (error) {
+                    alert('Error loading palette: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
         init();
     </script>
 </body>
