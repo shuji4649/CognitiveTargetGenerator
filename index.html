@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Target Generator - RCJ Rescue Maze 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f2f6ff;
+            background-image: radial-gradient(circle at 10% 10%, #ffffff 0%, #f2f6ff 45%, #eaf1ff 100%);
+            color: #24324d;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(133, 153, 190, 0.28);
+        }
+
+        .target-preview {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        input[type="range"] {
+            accent-color: #5b7cfa;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="flex justify-between items-end mb-8">
+            <div>
+                <h1
+                    class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-sky-500">
+                    Cognitive Target Generator
+                </h1>
+                <p class="text-slate-600 mt-1">based on Rescue Maze Rules 2026</p>
+            </div>
+            <div class="text-right hidden md:block">
+                <span class="text-xs font-mono text-slate-500">v1.0</span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Sidebar: Controls -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- 1. Color Palette -->
+                <section class="glass rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <span class="w-2 h-6 bg-blue-400 rounded-full mr-3"></span>
+                        Color Palette
+                    </h2>
+                    <div class="space-y-4" id="color-settings">
+                        <!-- Dynamic Color Inputs -->
+                    </div>
+                </section>
+
+                <!-- 2. Quantities -->
+                <section class="glass rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <span class="w-2 h-6 bg-sky-400 rounded-full mr-3"></span>
+                        Quantities
+                    </h2>
+                    <div class="grid grid-cols-2 gap-4" id="quantity-settings">
+                        <!-- Dynamic Quantity Inputs -->
+                    </div>
+                </section>
+
+                <!-- 3. Dimension Error -->
+                <section class="glass rounded-2xl p-6 shadow-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold flex items-center">
+                            <span class="w-2 h-6 bg-rose-400 rounded-full mr-3"></span>
+                            Scale (±10%)
+                        </h2>
+                        <span id="scale-display" class="font-mono text-blue-600 font-bold text-lg">1.00</span>
+                    </div>
+                    <input type="range" id="scale-slider" min="0.9" max="1.1" step="0.01" value="1.0"
+                        class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                    <p class="text-xs text-slate-500 mt-3 italic">Rule 3.8.6: All measurements have a tolerance of ±10%.
+                    </p>
+                </section>
+
+                <button id="generate-pdf"
+                    class="w-full bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-400 hover:to-sky-400 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-400/30 transition-all active:scale-95">
+                    Export to PDF (A4)
+                </button>
+            </div>
+
+            <!-- Main: Live Preview -->
+            <div class="lg:col-span-2 space-y-6">
+                <section class="glass rounded-2xl p-8 shadow-xl min-h-[600px]">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-xl font-bold tracking-tight">Live Preview</h2>
+                        <button onclick="refreshPatterns()"
+                            class="text-sm text-slate-500 hover:text-slate-800 transition-colors">↻ Shuffle
+                            Patterns</button>
+                    </div>
+                    <div id="preview-grid" class="grid grid-cols-2 md:grid-cols-3 gap-12">
+                        <!-- Target Previews Rendered Here -->
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        // Configuration
+        const colorDefs = [
+            { id: 'black', label: 'Black', val: -2, default: '#000000' },
+            { id: 'red', label: 'Red', val: -1, default: '#ef4444' },
+            { id: 'yellow', label: 'Yellow', val: 0, default: '#facc15' },
+            { id: 'green', label: 'Green', val: 1, default: '#22c55e' },
+            { id: 'blue', label: 'Blue', val: 2, default: '#3b82f6' }
+        ];
+
+        const targetTypes = [
+            { id: 'Harmed', label: 'Harmed', sum: 2, color: 'rose' },
+            { id: 'Stable', label: 'Stable', sum: 1, color: 'indigo' },
+            { id: 'Unharmed', label: 'Unharmed', sum: 0, color: 'emerald' },
+            { id: 'Fake', label: 'Fake Target', sum: null, color: 'slate' }
+        ];
+
+        // State
+        let currentColors = {};
+        let currentCounts = { Harmed: 2, Stable: 2, Unharmed: 2, Fake: 2 };
+        let currentScale = 1.0;
+
+        // Initialize UI
+        function init() {
+            const colorContainer = document.getElementById('color-settings');
+            colorDefs.forEach(c => {
+                currentColors[c.id] = c.default;
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between group";
+                div.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-lg shadow-inner mr-3 border border-white/10" style="background:${c.default}" id="swatch-${c.id}"></div>
+                        <span class="text-sm font-medium text-slate-700">${c.label} <span class="text-xs opacity-60 font-mono">(${c.val})</span></span>
+                    </div>
+                    <input type="color" value="${c.default}" class="w-8 h-8 opacity-0 absolute cursor-pointer" onchange="updateColor('${c.id}', this.value)">
+                    <span class="text-xs font-mono text-slate-500 group-hover:text-blue-600 transition-colors uppercase">${c.default}</span>
+                `;
+                colorContainer.appendChild(div);
+            });
+
+            const qtyContainer = document.getElementById('quantity-settings');
+            targetTypes.forEach(t => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label class="block text-xs text-slate-600 mb-1 ml-1">${t.label}</label>
+                    <input type="number" value="2" min="0" onchange="updateCount('${t.id}', this.value)" 
+                           class="w-full bg-white/90 border border-slate-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-center font-mono text-slate-800">
+                `;
+                qtyContainer.appendChild(div);
+            });
+
+            document.getElementById('scale-slider').addEventListener('input', (e) => {
+                currentScale = parseFloat(e.target.value);
+                document.getElementById('scale-display').innerText = currentScale.toFixed(2);
+                updatePreview();
+            });
+
+            updatePreview();
+        }
+
+        function updateColor(id, val) {
+            currentColors[id] = val;
+            document.getElementById(`swatch-${id}`).style.background = val;
+            updatePreview();
+        }
+
+        function updateCount(id, val) {
+            currentCounts[id] = parseInt(val) || 0;
+            updatePreview();
+        }
+
+        function refreshPatterns() { updatePreview(); }
+
+        // Logic for generating random rings that meet the sum requirement
+        function getRandomPattern(targetSum) {
+            const vals = colorDefs.map(c => c.val);
+            if (targetSum === null) { // Fake
+                while (true) {
+                    let p = Array.from({ length: 5 }, () => colorDefs[Math.floor(Math.random() * 5)]);
+                    let s = p.reduce((a, b) => a + b.val, 0);
+                    if (![0, 1, 2].includes(s)) return p;
+                }
+            } else {
+                while (true) {
+                    let p = Array.from({ length: 4 }, () => colorDefs[Math.floor(Math.random() * 5)]);
+                    let cur = p.reduce((a, b) => a + b.val, 0);
+                    let need = targetSum - cur;
+                    let match = colorDefs.find(c => c.val === need);
+                    if (match) {
+                        p.push(match);
+                        return p.sort(() => Math.random() - 0.5);
+                    }
+                }
+            }
+        }
+
+        function updatePreview() {
+            const grid = document.getElementById('preview-grid');
+            grid.innerHTML = '';
+
+            targetTypes.forEach(t => {
+                if (currentCounts[t.id] > 0) {
+                    const pattern = getRandomPattern(t.sum);
+                    const card = document.createElement('div');
+                    card.className = "flex flex-col items-center justify-center space-y-4 target-preview";
+
+                    let svgRings = '';
+                    const baseSize = 120; // px
+                    const scaledSize = baseSize * currentScale;
+
+                    pattern.reverse().forEach((c, i) => {
+                        const r = ((5 - i) / 5) * (scaledSize / 2);
+                        svgRings += `<circle cx="${baseSize / 2}" cy="${baseSize / 2}" r="${r}" fill="${currentColors[c.id]}" stroke="#000" stroke-width="0.5" />`;
+                    });
+
+                    card.innerHTML = `
+                        <div class="relative group">
+                            <svg width="${baseSize}" height="${baseSize}" viewBox="0 0 ${baseSize} ${baseSize}">
+                                ${svgRings}
+                            </svg>
+                            <div class="absolute -top-2 -right-2 bg-white/95 border border-slate-300 text-slate-700 shadow-sm text-[10px] px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                Sum: ${pattern.reduce((a, b) => a + b.val, 0)}
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-[10px] uppercase tracking-widest text-slate-600 font-bold">${t.label}</span>
+                            <div class="h-1 w-8 bg-blue-400 mx-auto mt-1 rounded-full"></div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                }
+            });
+        }
+
+        async function generatePDF() {
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+
+            let queue = [];
+            targetTypes.forEach(t => {
+                for (let i = 0; i < currentCounts[t.id]; i++) queue.push(t);
+            });
+
+            const margin = 20;
+            const stepX = 60;
+            const stepY = 70;
+            let x = margin + 25;
+            let y = margin + 25;
+
+            for (let i = 0; i < queue.length; i++) {
+                const t = queue[i];
+                const pattern = getRandomPattern(t.sum);
+                const actualSum = pattern.reduce((a, b) => a + b.val, 0);
+
+                // Draw 5 Rings
+                pattern.reverse().forEach((c, ringIdx) => {
+                    const diameter = (5 - ringIdx) * 10 * currentScale; // 50, 40, 30, 20, 10 mm
+                    doc.setFillColor(currentColors[c.id]);
+                    doc.setDrawColor(0);
+                    doc.setLineWidth(0.1);
+                    doc.circle(x, y, diameter / 2, 'FD');
+                });
+
+                // Label
+                doc.setFontSize(8);
+                doc.setTextColor(100);
+                doc.text(`${t.label} (Sum: ${actualSum})`, x, y + 32, { align: 'center' });
+                doc.setFontSize(6);
+                doc.text(`Scale: ${currentScale.toFixed(2)}`, x, y + 35, { align: 'center' });
+
+                x += stepX;
+                if (x > pageWidth - margin) {
+                    x = margin + 25;
+                    y += stepY;
+                }
+                if (y > pageHeight - margin && i < queue.length - 1) {
+                    doc.addPage();
+                    x = margin + 25;
+                    y = margin + 25;
+                }
+            }
+
+            doc.save(`RCJ_Rescue_Maze_Targets_${new Date().getTime()}.pdf`);
+        }
+
+        document.getElementById('generate-pdf').onclick = generatePDF;
+        init();
+    </script>
+</body>
+
+</html>
