@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -47,66 +47,106 @@
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Sidebar: Controls -->
-            <div class="lg:col-span-1 space-y-6">
-                <!-- 1. Color Palette -->
-                <section class="glass rounded-2xl p-6 shadow-xl">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center">
-                        <span class="w-2 h-6 bg-blue-400 rounded-full mr-3"></span>
-                        Color Palette
-                    </h2>
-                    <div class="space-y-4" id="color-settings">
-                        <!-- Dynamic Color Inputs -->
+        <div class="space-y-8">
+            <!-- 1. Color Adjustment Section -->
+            <section class="glass rounded-2xl p-6 md:p-8 shadow-xl">
+                <h2 class="text-2xl font-bold text-slate-700 mb-2">1. Color Adjustment</h2>
+                <p class="text-slate-600 text-sm mb-6">Customize the colors. You can check the colors in the preview
+                    section.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <span class="w-2 h-6 bg-blue-400 rounded-full mr-3"></span>
+                            Color Palette
+                        </h3>
+                        <div class="space-y-4" id="color-settings">
+                            <!-- Dynamic Color Inputs -->
+                        </div>
                     </div>
-                </section>
-
-                <!-- 2. Quantities -->
-                <section class="glass rounded-2xl p-6 shadow-xl">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center">
-                        <span class="w-2 h-6 bg-sky-400 rounded-full mr-3"></span>
-                        Quantities
-                    </h2>
-                    <div class="grid grid-cols-2 gap-4" id="quantity-settings">
-                        <!-- Dynamic Quantity Inputs -->
+                    <div class="lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">Preview</h3>
+                            <button onclick="refreshPatterns()"
+                                class="text-sm text-slate-500 hover:text-slate-800 transition-colors">↻ Shuffle
+                                Patterns</button>
+                        </div>
+                        <div id="preview-grid" class="grid grid-cols-2 md:grid-cols-3 gap-10">
+                            <!-- Target Previews Rendered Here -->
+                        </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                <!-- 3. Dimension Error -->
-                <section class="glass rounded-2xl p-6 shadow-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-semibold flex items-center">
+            <!-- 2. Auto PDF Generation Section -->
+            <section class="glass rounded-2xl p-6 md:p-8 shadow-xl">
+                <h2 class="text-2xl font-bold text-slate-700 mb-2">2. Auto PDF Generation</h2>
+                <p class="text-slate-600 text-sm mb-6">Automatically generate target patterns based on the Rescue Maze
+                    Rules. </p>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <span class="w-2 h-6 bg-sky-400 rounded-full mr-3"></span>
+                            Quantity Input
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4" id="quantity-settings">
+                            <!-- Dynamic Quantity Inputs -->
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
                             <span class="w-2 h-6 bg-rose-400 rounded-full mr-3"></span>
-                            Scale (±10%)
-                        </h2>
-                        <span id="scale-display" class="font-mono text-blue-600 font-bold text-lg">1.00</span>
+                            Dimension Input
+                        </h3>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm text-slate-600">Scale (±10%)</span>
+                            <span id="scale-display" class="font-mono text-blue-600 font-bold text-lg">100%</span>
+                        </div>
+                        <input type="range" id="scale-slider" min="0.9" max="1.1" step="0.01" value="1.0"
+                            class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
                     </div>
-                    <input type="range" id="scale-slider" min="0.9" max="1.1" step="0.01" value="1.0"
-                        class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
-                    <p class="text-xs text-slate-500 mt-3 italic">Rule 3.8.6: All measurements have a tolerance of ±10%.
-                    </p>
-                </section>
+                    <div class="flex flex-col items-end justify-end gap-4">
+                        <div class="flex items-center gap-2 w-full">
+                            <input type="checkbox" id="show-labels-auto" checked class="w-4 h-4 text-blue-600 rounded">
+                            <label for="show-labels-auto" class="text-xs text-slate-600">Show value &
+                                classification</label>
+                        </div>
+                        <button id="generate-pdf"
+                            class="w-full bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-400 hover:to-sky-400 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-400/30 transition-all active:scale-95">
+                            Export Auto PDF (A4)
+                        </button>
+                    </div>
+                </div>
+            </section>
 
-                <button id="generate-pdf"
-                    class="w-full bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-400 hover:to-sky-400 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-400/30 transition-all active:scale-95">
-                    Export to PDF (A4)
-                </button>
-            </div>
-
-            <!-- Main: Live Preview -->
-            <div class="lg:col-span-2 space-y-6">
-                <section class="glass rounded-2xl p-8 shadow-xl min-h-[600px]">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-xl font-bold tracking-tight">Live Preview</h2>
-                        <button onclick="refreshPatterns()"
-                            class="text-sm text-slate-500 hover:text-slate-800 transition-colors">↻ Shuffle
-                            Patterns</button>
+            <!-- 3. Manual Creation Section -->
+            <section class="glass rounded-2xl p-6 md:p-8 shadow-xl">
+                <h2 class="text-2xl font-bold text-slate-700 mb-2">3. Manual Creation</h2>
+                <p class="text-slate-600 text-sm mb-6">Handcraft up to 12 custom targets by selecting colors for each
+                    ring individually. </p>
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div class="w-full md:w-auto md:min-w-[320px]">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-slate-600">Dimension (Scale)</span>
+                            <span id="manual-scale-display" class="font-mono text-blue-600 font-bold">100%</span>
+                        </div>
+                        <input type="range" id="manual-scale-slider" min="0.9" max="1.1" step="0.01" value="1.0"
+                            class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex items-center gap-2 mt-3">
+                            <input type="checkbox" id="show-labels-manual" checked
+                                class="w-4 h-4 text-blue-600 rounded">
+                            <label for="show-labels-manual" class="text-xs text-slate-600">Show value &
+                                classification</label>
+                        </div>
                     </div>
-                    <div id="preview-grid" class="grid grid-cols-2 md:grid-cols-3 gap-12">
-                        <!-- Target Previews Rendered Here -->
-                    </div>
-                </section>
-            </div>
+                    <button id="generate-manual-pdf"
+                        class="bg-white border border-blue-300 text-blue-700 hover:bg-blue-50 font-bold py-3 px-6 rounded-xl transition-colors">
+                        Export Manual PDF (12 Targets)
+                    </button>
+                </div>
+                <div id="manual-targets-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <!-- Manual targets rendered here -->
+                </div>
+            </section>
         </div>
     </div>
 
@@ -139,6 +179,10 @@
         let currentColors = {};
         let currentCounts = { Harmed: 2, Stable: 2, Unharmed: 2, Fake: 2 };
         let currentScale = 1.0;
+        let manualScale = 1.0;
+        let manualTargets = [];
+        let showLabelsAuto = true;
+        let showLabelsManual = true;
 
         // Initialize UI
         function init() {
@@ -171,7 +215,17 @@
 
             document.getElementById('scale-slider').addEventListener('input', (e) => {
                 currentScale = parseFloat(e.target.value);
-                document.getElementById('scale-display').innerText = currentScale.toFixed(2);
+                document.getElementById('scale-display').innerText = Math.round(currentScale * 100) + '%';
+            });
+
+            manualTargets = Array.from({ length: 12 }, () =>
+                Array.from({ length: 5 }, () => colorDefs[Math.floor(Math.random() * colorDefs.length)].id)
+            );
+            renderManualTargets();
+
+            document.getElementById('manual-scale-slider').addEventListener('input', (e) => {
+                manualScale = parseFloat(e.target.value);
+                document.getElementById('manual-scale-display').innerText = Math.round(manualScale * 100) + '%';
             });
 
             updatePreview();
@@ -181,6 +235,7 @@
             currentColors[id] = val;
             document.getElementById(`swatch-${id}`).style.background = val;
             updatePreview();
+            updateAllManualPreviews();
         }
 
         function updateCount(id, val) {
@@ -188,6 +243,89 @@
         }
 
         function refreshPatterns() { updatePreview(); }
+
+        function getClassification(sum) {
+            if (sum === 2) return 'Harmed';
+            if (sum === 1) return 'Stable';
+            if (sum === 0) return 'Unharmed';
+            return 'Fake Target';
+        }
+
+        function getManualSum(targetIdx) {
+            return manualTargets[targetIdx]
+                .map(id => colorDefs.find(c => c.id === id).val)
+                .reduce((a, b) => a + b, 0);
+        }
+
+        function renderManualTargets() {
+            const container = document.getElementById('manual-targets-grid');
+            container.innerHTML = '';
+
+            for (let i = 0; i < 12; i++) {
+                const card = document.createElement('div');
+                card.className = 'bg-white/80 border border-slate-200 rounded-xl p-4';
+
+                let selectsHtml = '';
+                for (let ring = 0; ring < 5; ring++) {
+                    const options = colorDefs.map(c =>
+                        `<option value="${c.id}" ${manualTargets[i][ring] === c.id ? 'selected' : ''}>Ring ${ring + 1}: ${c.label} (${c.val})</option>`
+                    ).join('');
+                    selectsHtml += `
+                        <select onchange="updateManualRing(${i}, ${ring}, this.value)"
+                            class="w-full bg-white border border-slate-300 rounded-lg py-1.5 px-2 text-sm text-slate-700">
+                            ${options}
+                        </select>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-slate-700">Target ${i + 1}</h4>
+                        <svg id="manual-preview-${i}" width="64" height="64" viewBox="0 0 120 120"></svg>
+                    </div>
+                    <div class="space-y-2 mb-3">
+                        ${selectsHtml}
+                    </div>
+                    <div class="text-sm text-slate-600">
+                        <span class="font-mono">Value: <span id="manual-sum-${i}">0</span></span>
+                        <span class="mx-2">|</span>
+                        <span>Classification: <span id="manual-class-${i}" class="font-semibold text-slate-700"></span></span>
+                    </div>
+                `;
+
+                container.appendChild(card);
+                updateManualCard(i);
+            }
+        }
+
+        function updateManualRing(targetIdx, ringIdx, colorId) {
+            manualTargets[targetIdx][ringIdx] = colorId;
+            updateManualCard(targetIdx);
+        }
+
+        function updateManualCard(targetIdx) {
+            const svg = document.getElementById(`manual-preview-${targetIdx}`);
+            if (!svg) return;
+
+            const rings = [...manualTargets[targetIdx]];
+            let svgRings = '';
+            const baseSize = 120;
+            rings.reverse().forEach((id, i) => {
+                const r = ((5 - i) / 5) * (baseSize / 2);
+                svgRings += `<circle cx="${baseSize / 2}" cy="${baseSize / 2}" r="${r}" fill="${currentColors[id]}" />`;
+            });
+            svg.innerHTML = svgRings;
+
+            const sum = getManualSum(targetIdx);
+            document.getElementById(`manual-sum-${targetIdx}`).innerText = sum;
+            document.getElementById(`manual-class-${targetIdx}`).innerText = getClassification(sum);
+        }
+
+        function updateAllManualPreviews() {
+            for (let i = 0; i < 12; i++) {
+                updateManualCard(i);
+            }
+        }
 
         // Logic for generating random rings that meet the sum requirement
         function getRandomPattern(targetSum) {
@@ -278,11 +416,13 @@
                 });
 
                 // Label
-                doc.setFontSize(8);
-                doc.setTextColor(100);
-                doc.text(`${t.label} (Sum: ${actualSum})`, x, y + 32, { align: 'center' });
-                doc.setFontSize(6);
-                doc.text(`Scale: ${currentScale.toFixed(2)}`, x, y + 35, { align: 'center' });
+                if (document.getElementById('show-labels-auto').checked) {
+                    doc.setFontSize(8);
+                    doc.setTextColor(100);
+                    doc.text(`${t.label} (Sum: ${actualSum})`, x, y + 32, { align: 'center' });
+                    doc.setFontSize(6);
+                    doc.text(`Scale: ${currentScale.toFixed(2)}`, x, y + 35, { align: 'center' });
+                }
 
                 x += stepX;
                 if (x > pageWidth - margin) {
@@ -299,7 +439,53 @@
             doc.save(`RCJ_Rescue_Maze_Targets_${new Date().getTime()}.pdf`);
         }
 
+        async function generateManualPDF() {
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+
+            const margin = 20;
+            const stepX = 60;
+            const stepY = 70;
+            let x = margin + 25;
+            let y = margin + 25;
+
+            for (let i = 0; i < manualTargets.length; i++) {
+                const pattern = manualTargets[i].map(id => colorDefs.find(c => c.id === id));
+                const actualSum = pattern.reduce((a, b) => a + b.val, 0);
+                const classification = getClassification(actualSum);
+
+                pattern.slice().reverse().forEach((c, ringIdx) => {
+                    const diameter = (5 - ringIdx) * 10 * manualScale;
+                    doc.setFillColor(currentColors[c.id]);
+                    doc.circle(x, y, diameter / 2, 'F');
+                });
+
+                if (document.getElementById('show-labels-manual').checked) {
+                    doc.setFontSize(8);
+                    doc.setTextColor(100);
+                    doc.text(`Manual ${i + 1} (${classification}, Sum: ${actualSum})`, x, y + 32, { align: 'center' });
+                    doc.setFontSize(6);
+                    doc.text(`Scale: ${manualScale.toFixed(2)}`, x, y + 35, { align: 'center' });
+                }
+
+                x += stepX;
+                if (x > pageWidth - margin) {
+                    x = margin + 25;
+                    y += stepY;
+                }
+                if (y > pageHeight - margin && i < manualTargets.length - 1) {
+                    doc.addPage();
+                    x = margin + 25;
+                    y = margin + 25;
+                }
+            }
+
+            doc.save(`RCJ_Rescue_Maze_Manual_Targets_${new Date().getTime()}.pdf`);
+        }
+
         document.getElementById('generate-pdf').onclick = generatePDF;
+        document.getElementById('generate-manual-pdf').onclick = generateManualPDF;
         init();
     </script>
 </body>
